@@ -152,6 +152,69 @@ public static class PokerRuleSet
                     consecutiveCount = 1;
                 }
             }
+
+            // Check for Ace to 5 straight flush (Ace is treated as 1)
+            var hasAce = cards.Any(card => card.Rank == CardRank.Ace);
+            if (!isStraightFlush && hasAce)
+            {
+                var aceToFiveCards = cards.Where(card => card.Rank >= CardRank.Two && card.Rank <= CardRank.Five).OrderBy(card => card.Rank).ToList();
+
+                if (aceToFiveCards.Count == 5)
+                {
+                    consecutiveCount = 1;
+                    for (var i = 1; i < aceToFiveCards.Count; i++)
+                    {
+                        if (aceToFiveCards[i].Rank == aceToFiveCards[i - 1].Rank + 1 && aceToFiveCards[i].Suit == aceToFiveCards[i - 1].Suit)
+                        {
+                            consecutiveCount++;
+                            if (consecutiveCount >= 5)
+                            {
+                                winningCards = aceToFiveCards;
+                                isStraightFlush = true;
+                                break;
+                            }
+                        }
+                        else if (aceToFiveCards[i].Rank != aceToFiveCards[i - 1].Rank)
+                        {
+                            consecutiveCount = 1;
+                        }
+
+                        if (aceToFiveCards[i].Rank == CardRank.Six)
+                            break;
+                    }
+                }
+            }
+
+            // Check for Ace to 5 straight (Ace is treated as 1)
+            if (!isStraight && !isStraightFlush && hasAce)
+            {
+                var aceToFiveCards = cards.Where(card => card.Rank >= CardRank.Two && card.Rank <= CardRank.Five).OrderBy(card => card.Rank).ToList();
+
+                if (aceToFiveCards.Count == 5)
+                {
+                    consecutiveCount = 1;
+                    for (var i = 1; i < aceToFiveCards.Count; i++)
+                    {
+                        if (aceToFiveCards[i].Rank == aceToFiveCards[i - 1].Rank + 1)
+                        {
+                            consecutiveCount++;
+                            if (consecutiveCount >= 5)
+                            {
+                                winningCards = aceToFiveCards;
+                                isStraight = true;
+                                break;
+                            }
+                        }
+                        else if (aceToFiveCards[i].Rank != aceToFiveCards[i - 1].Rank)
+                        {
+                            consecutiveCount = 1;
+                        }
+
+                        if (aceToFiveCards[i].Rank == CardRank.Six)
+                            break;
+                    }
+                }
+            }
         }
 
         // Check for pairs
