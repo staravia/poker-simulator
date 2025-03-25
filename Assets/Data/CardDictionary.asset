@@ -1,0 +1,171 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e48fbbcaeb99b2f46914b5a7c018fcac, type: 3}
+  m_Name: CardDictionary
+  m_EditorClassIdentifier: 
+  cardSpriteList:
+  - Suit: 0
+    Rank: 0
+    Sprite: {fileID: 243554069, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 0
+    Rank: 1
+    Sprite: {fileID: -1349641516, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 0
+    Rank: 2
+    Sprite: {fileID: -1565806485, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 0
+    Rank: 3
+    Sprite: {fileID: -1469682460, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 0
+    Rank: 4
+    Sprite: {fileID: 1021224570, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 0
+    Rank: 5
+    Sprite: {fileID: -211250392, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 0
+    Rank: 6
+    Sprite: {fileID: -1848895613, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 0
+    Rank: 7
+    Sprite: {fileID: -1364052250, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 0
+    Rank: 8
+    Sprite: {fileID: 655094809, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 0
+    Rank: 9
+    Sprite: {fileID: -1323422042, guid: 0cdd29264c103ab479226748d3ac7a24, type: 3}
+  - Suit: 0
+    Rank: 10
+    Sprite: {fileID: -1249951939, guid: 0cdd29264c103ab479226748d3ac7a24, type: 3}
+  - Suit: 0
+    Rank: 11
+    Sprite: {fileID: 380071931, guid: 0cdd29264c103ab479226748d3ac7a24, type: 3}
+  - Suit: 0
+    Rank: 12
+    Sprite: {fileID: -42792430, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 1
+    Rank: 0
+    Sprite: {fileID: -30712635, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 1
+    Rank: 1
+    Sprite: {fileID: 1714900099, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 1
+    Rank: 2
+    Sprite: {fileID: -470088729, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 1
+    Rank: 3
+    Sprite: {fileID: 1115386622, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 1
+    Rank: 4
+    Sprite: {fileID: 687153131, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 1
+    Rank: 5
+    Sprite: {fileID: 990961832, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 1
+    Rank: 6
+    Sprite: {fileID: 556463367, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 1
+    Rank: 7
+    Sprite: {fileID: -1228500438, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 1
+    Rank: 8
+    Sprite: {fileID: 290561800, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 1
+    Rank: 9
+    Sprite: {fileID: 1531550374, guid: 0cdd29264c103ab479226748d3ac7a24, type: 3}
+  - Suit: 1
+    Rank: 10
+    Sprite: {fileID: 1001148500, guid: 0cdd29264c103ab479226748d3ac7a24, type: 3}
+  - Suit: 1
+    Rank: 11
+    Sprite: {fileID: 354739703, guid: 0cdd29264c103ab479226748d3ac7a24, type: 3}
+  - Suit: 1
+    Rank: 12
+    Sprite: {fileID: 54407565, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 2
+    Rank: 0
+    Sprite: {fileID: 1988254601, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 2
+    Rank: 1
+    Sprite: {fileID: -396890780, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 2
+    Rank: 2
+    Sprite: {fileID: 654793880, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 2
+    Rank: 3
+    Sprite: {fileID: -1098993847, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 2
+    Rank: 4
+    Sprite: {fileID: 239355473, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 2
+    Rank: 5
+    Sprite: {fileID: -1428203712, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 2
+    Rank: 6
+    Sprite: {fileID: 663859706, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 2
+    Rank: 7
+    Sprite: {fileID: 441188396, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 2
+    Rank: 8
+    Sprite: {fileID: 1713251286, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 2
+    Rank: 9
+    Sprite: {fileID: -47249429, guid: 0cdd29264c103ab479226748d3ac7a24, type: 3}
+  - Suit: 2
+    Rank: 10
+    Sprite: {fileID: 607935728, guid: 0cdd29264c103ab479226748d3ac7a24, type: 3}
+  - Suit: 2
+    Rank: 11
+    Sprite: {fileID: 233657998, guid: 0cdd29264c103ab479226748d3ac7a24, type: 3}
+  - Suit: 2
+    Rank: 12
+    Sprite: {fileID: 185671271, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 3
+    Rank: 0
+    Sprite: {fileID: -1931746324, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 3
+    Rank: 1
+    Sprite: {fileID: -732838330, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 3
+    Rank: 2
+    Sprite: {fileID: -1248277271, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 3
+    Rank: 3
+    Sprite: {fileID: 437529029, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 3
+    Rank: 4
+    Sprite: {fileID: -1908840, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 3
+    Rank: 5
+    Sprite: {fileID: 75503216, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 3
+    Rank: 6
+    Sprite: {fileID: -1233671057, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 3
+    Rank: 7
+    Sprite: {fileID: -1741185503, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 3
+    Rank: 8
+    Sprite: {fileID: -1961420528, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
+  - Suit: 3
+    Rank: 9
+    Sprite: {fileID: 1267447667, guid: 0cdd29264c103ab479226748d3ac7a24, type: 3}
+  - Suit: 3
+    Rank: 10
+    Sprite: {fileID: -516212343, guid: 0cdd29264c103ab479226748d3ac7a24, type: 3}
+  - Suit: 3
+    Rank: 11
+    Sprite: {fileID: 1075664214, guid: 0cdd29264c103ab479226748d3ac7a24, type: 3}
+  - Suit: 3
+    Rank: 12
+    Sprite: {fileID: -803270676, guid: b1d874091ab068042a416076b9fdbca3, type: 3}
