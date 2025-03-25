@@ -10,21 +10,21 @@ public static class PokerRuleSet
     {
         var winningHandType = PokerHandType.Invalid;
         var winningHandIndex = -1;
-        var playedHands = new List<PokerHandType>();
+        var playedHandTypes = new List<PokerHandType>();
         List<CardData> winningCards = null;
 
         for (int i = 0; i < pairs.Count; i++)
         {
             var result = GetHandType(pairs[i], river);
-            playedHands.Add(result.HandType);
+            playedHandTypes.Add(result.WinningHandType);
 
-            if (result.HandType > winningHandType)
+            if (result.WinningHandType > winningHandType)
             {
-                winningHandType = result.HandType;
+                winningHandType = result.WinningHandType;
                 winningHandIndex = i;
                 winningCards = result.WinningCards;
             }
-            else if (result.HandType == winningHandType)
+            else if (result.WinningHandType == winningHandType)
             {
                 if (CompareHands(result.WinningCards, winningCards) > 0)
                 {
@@ -34,7 +34,7 @@ public static class PokerRuleSet
             }
         }
 
-        return new WinningHandArgs(winningHandType, winningCards, winningHandIndex, playedHands);
+        return new WinningHandArgs(winningHandType, winningCards, winningHandIndex, playedHandTypes, pairs, river);
     }
 
     private static int CompareHands(List<CardData> handA, List<CardData> handB)

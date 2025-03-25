@@ -1,8 +1,11 @@
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class PokerTableManager : MonoBehaviour
@@ -14,13 +17,14 @@ public class PokerTableManager : MonoBehaviour
     [SerializeField] private RectTransform _cardPairsContainer;
     [SerializeField] private CardPairDisplay _cardPairDisplayPrefab;
 
-    private Dictionary<CardPairData, CardPairDisplay> _hands = new Dictionary<CardPairData, CardPairDisplay>();
     private Dictionary<CardData, CardDisplay> _riverCards = new Dictionary<CardData, CardDisplay>();
     private List<CardPairDisplay> _cardPairDisplays = new List<CardPairDisplay>();
     // private Stack<CardData> _deck = new Stack<CardData>();
 
-    private Dictionary<PokerHandType, int> _handTypePlayedCount = new Dictionary<PokerHandType, int>();
-    private Dictionary<PokerHandType, int> _handTypeWonCount = new Dictionary<PokerHandType, int>();
+    private bool _isComputing = false;
+    private ConcurrentDictionary<PokerHandType, int> _handTypePlayedCount = new ConcurrentDictionary<PokerHandType, int>();
+    private ConcurrentDictionary<PokerHandType, int> _handTypeWonCount = new ConcurrentDictionary<PokerHandType, int>();
+    private ConcurrentQueue<WinningHandArgs> _computedWinningHands = new ConcurrentQueue<WinningHandArgs>();
 
     private Stack<CardData> CreateDeck()
     {
@@ -38,10 +42,11 @@ public class PokerTableManager : MonoBehaviour
 
     private Stack<CardData> ShuffleDeck(List<CardData> deck)
     {
+        var rng = new System.Random();
+
         for (int i = deck.Count - 1; i > 0; i--)
         {
-            var random = UnityEngine.Random.value;
-            var index = (int)((i + 1) * random);
+            var index = rng.Next(0, i + 1);
             var temp = deck[i];
             deck[i] = deck[index];
             deck[index] = temp;
@@ -51,73 +56,144 @@ public class PokerTableManager : MonoBehaviour
         return stack;
     }
 
-    private void SetCards(Stack<CardData> deck)
+    private (List<CardPairData> hands, List<CardData> riverCards) SetCards(Stack<CardData> deck, int handCount)
     {
         if (deck == null)
         {
-            Debug.LogError("Deck does not exist.");
-            return;
+            // Debug.LogError("Deck does not exist.");
+            return (null, null);
         }
 
-        if (deck.Count < _hands.Count * 2 + 5)
+        var hands = new List<CardPairData>();
+        var riverCards = new List<CardData>();
+
+        if (deck.Count < handCount * 2 + 5)
         {
-            Debug.LogError("Not enough cards in deck.");
-            return;
+            // Debug.LogError("Not enough cards in deck.");
+            return (null, null);
         }
 
-        _hands.Clear();
-        foreach (var display in _cardPairDisplays)
+        for (var i = 0; i < handCount; i++)
         {
             var cardA = deck.Pop();
             var cardB = deck.Pop();
             var data = new CardPairData(cardA, cardB);
-            _hands.Add(data, display);
-
-            display.SetDisplay(data);
+            hands.Add(data);
         }
 
-        _riverCards.Clear();
-        foreach (var display in _riverCardDisplays)
+        for (var i = 0; i < _riverCardDisplays.Count; i++)
         {
             var card = deck.Pop();
-            _riverCards.Add(card, display);
-            display.SetDisplay(card);
+            riverCards.Add(card);
         }
+
+        return (hands, riverCards);
     }
 
-    private void DisplayWinningCards()
+
+    private void TryComputeMultipleWinningHands()
     {
-        var result = PokerRuleSet.GetWinningHand(_hands.Keys.ToList(), _riverCards.Keys.ToList());
+        if (_isComputing)
+            return;
 
-        var display = _cardPairDisplays[result.WinningHandIndex];
-        display.HighlightWinningCards(result.WinningCards);
+        _isComputing = true;
+        Task.Run(() => HandleScheduleWinningHandsTask());
+    }
 
-        // Display winning cards/hands
-        foreach (var card in _riverCards)
+    private void HandleScheduleWinningHandsTask()
+    {
+        var numberOfHandsToCompute = 320;
+
+        // Split into smaller batches to prevent frame lag
+        int batchSize = 40;
+        int batchCount = (int)Math.Ceiling((double)numberOfHandsToCompute / batchSize);
+
+        for (int batch = 0; batch < batchCount; batch++)
         {
-            card.Value.SetDisabled(true);
+            int startIndex = batch * batchSize;
+            int endIndex = Math.Min(startIndex + batchSize, numberOfHandsToCompute);
+
+            Parallel.For(startIndex, endIndex, i =>
+            {
+                var deck = CreateDeck();
+                var table = SetCards(deck, _totalHands);
+                var result = PokerRuleSet.GetWinningHand(table.hands, table.riverCards);
+                _computedWinningHands.Enqueue(result);
+            });
+
+            Task.Delay(5).Wait(); // Arbitrary Delay
         }
 
-        foreach (var card in result.WinningCards)
+        _isComputing = false;
+    }
+
+    private void ComputeSingleWinningHand()
+    {
+        var deck = CreateDeck();
+        var table = SetCards(deck, _totalHands);
+        var result = PokerRuleSet.GetWinningHand(table.hands, table.riverCards);
+        _computedWinningHands.Enqueue(result);
+    }
+
+    private void TryDisplayWinningCards()
+    {
+        var currentHandType = PokerHandType.Invalid;
+        var winningHands = new List<WinningHandArgs>();
+        lock (_computedWinningHands)
         {
-            if (_riverCards.ContainsKey(card))
+            while (_computedWinningHands.Count > 0)
             {
-                _riverCards[card].SetDisabled(false);
+                var result = _computedWinningHands.TryDequeue(out var args);
+                if (!result)
+                {
+                    Debug.LogError($"Failed to dequeue {nameof(_computedWinningHands)}");
+                    return;
+                }
+
+                _handTypeWonCount.AddOrUpdate(args.WinningHandType, 1, (key, oldValue) => oldValue + 1);
+                foreach (var handType in args.PlayedHandTypes)
+                {
+                    _handTypePlayedCount.AddOrUpdate(handType, 1, (key, oldValue) => oldValue + 1);
+                }
+
+                winningHands.Add(args);
             }
         }
 
-        // Count Hand Types
-        if (_handTypeWonCount.ContainsKey(result.HandType))
-            _handTypeWonCount[result.HandType]++;
-        else
-            _handTypeWonCount.Add(result.HandType, 1);
-
-        foreach (var playedHand in result.PlayedHands)
+        // Update Card display
+        foreach (var args in winningHands)
         {
-            if (_handTypePlayedCount.ContainsKey(playedHand))
-                _handTypePlayedCount[playedHand]++;
-            else
-                _handTypePlayedCount.Add(playedHand, 1);
+            currentHandType = args.WinningHandType;
+            for (int i = 0; i < args.PlayedHands.Count; i++)
+            {
+                var data = args.PlayedHands[i];
+                var display = _cardPairDisplays[i];
+
+                display.SetDisplay(data);
+                display.HighlightWinningCards(args.WinningCards);
+            }
+
+            _riverCards.Clear();
+            for (var i = 0; i < args.RiverCards.Count; i++)
+            {
+                var data = args.RiverCards[i];
+                var riverCardDisplay = _riverCardDisplays[i];
+                _riverCards.Add(data, riverCardDisplay);
+                riverCardDisplay.SetDisplay(data);
+            }
+
+            foreach (var card in _riverCards)
+            {
+                card.Value.SetDisabled(true);
+            }
+
+            foreach (var card in args.WinningCards)
+            {
+                if (_riverCards.ContainsKey(card))
+                {
+                    _riverCards[card].SetDisabled(false);
+                }
+            }
         }
 
         // Update winning text
@@ -145,9 +221,9 @@ public class PokerTableManager : MonoBehaviour
             _handsWonText.text += $"{entry.Key}: {entry.Value} ({(float)entry.Value / total * 100:0.00}%)\n";
         }
         _handsWonText.text += $"\n<size=14>Rounds Played: {total}</size>";
-        _handsWonText.text += $"\n<size=14>Winning Hand: {result.HandType}</size>";
+        _handsWonText.text += $"\n<size=14>Winning Hand: {currentHandType}</size>";
 
-        // if (result.HandType == PokerHandType.HighCard)
+        // if (currentHandType == PokerHandType.HighCard)
         //     _isPaused = true;
     }
 
@@ -171,15 +247,14 @@ public class PokerTableManager : MonoBehaviour
 
         if (!_isPaused)
         {
-            var deck = CreateDeck();
-            SetCards(deck);
-            DisplayWinningCards();
+            // ComputeSingleWinningHand();
+            TryComputeMultipleWinningHands();
+            TryDisplayWinningCards();
         }
         else if (Input.GetKeyDown(KeyCode.A))
         {
-            var deck = CreateDeck();
-            SetCards(deck);
-            DisplayWinningCards();
+            ComputeSingleWinningHand();
+            TryDisplayWinningCards();
         }
     }
 }

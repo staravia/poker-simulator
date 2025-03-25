@@ -5,15 +5,19 @@ public struct WinningHandArgs
 {
     public int WinningHandIndex { get; }
     public List<CardData> WinningCards { get; }
-    public PokerHandType HandType { get; }
-    public List<PokerHandType> PlayedHands { get; }
+    public PokerHandType WinningHandType { get; }
+    public List<CardPairData> PlayedHands { get; }
+    public List<PokerHandType> PlayedHandTypes { get; }
+    public List<CardData> RiverCards { get; }
 
-    public WinningHandArgs(PokerHandType handType, List<CardData> winningCards, int handIndex = -1, List<PokerHandType> playedHands = null)
+    public WinningHandArgs(PokerHandType winningHandType, List<CardData> winningCards, int handIndex = -1, List<PokerHandType> playedHandTypes = null, List<CardPairData> playedHands = null, List<CardData> riverCards = null)
     {
         WinningCards = winningCards;
-        HandType = handType;
+        WinningHandType = winningHandType;
         WinningHandIndex = handIndex;
+        RiverCards = riverCards;
 
+        PlayedHandTypes = playedHandTypes;
         PlayedHands = playedHands;
     }
 }

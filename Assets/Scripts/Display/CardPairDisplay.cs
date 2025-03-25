@@ -24,4 +24,10 @@ public class CardPairDisplay : MonoBehaviour
         _cardA.SetDisabled(!cards.Contains(_cardA.Card));
         _cardB.SetDisabled(!cards.Contains(_cardB.Card));
     }
+
+    public void Highlight()
+    {
+        _cardA.SetDisabled(false);
+        _cardB.SetDisabled(false);
+    }
 }
