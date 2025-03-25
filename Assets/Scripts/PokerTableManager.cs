@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class PokerTableManager : MonoBehaviour
@@ -10,10 +11,10 @@ public class PokerTableManager : MonoBehaviour
     [SerializeField] private RectTransform _cardPairsContainer;
     [SerializeField] private CardPairDisplay _cardPairDisplayPrefab;
 
-    private List<CardPairDisplay> _cardPairDisplays = new List<CardPairDisplay>();
-    private List<CardPairData> _hands = new List<CardPairData>();
-    private List<CardData> _riverCards = new List<CardData>();
-    private Stack<CardData> _deck = new Stack<CardData>();
+    private Dictionary<CardPairData, CardPairDisplay> _hands = new Dictionary<CardPairData, CardPairDisplay>();
+    private Dictionary<CardData, CardDisplay> _riverCards = new Dictionary<CardData, CardDisplay>();
+    private List<CardPairDisplay> _cachedPairDisplays = new List<CardPairDisplay>();
+    // private Stack<CardData> _deck = new Stack<CardData>();
 
     private Stack<CardData> CreateDeck()
     {
@@ -44,27 +45,27 @@ public class PokerTableManager : MonoBehaviour
         return stack;
     }
 
-    private void SetCards()
+    private void SetCards(Stack<CardData> deck)
     {
-        if (_deck == null)
+        if (deck == null)
         {
             Debug.LogError("Deck does not exist.");
             return;
         }
 
-        if (_deck.Count < _cardPairDisplays.Count * 2 + 5)
+        if (deck.Count < _hands.Count * 2 + 5)
         {
             Debug.LogError("Not enough cards in deck.");
             return;
         }
 
         _hands.Clear();
-        foreach (var display in _cardPairDisplays)
+        foreach (var display in _cachedPairDisplays)
         {
-            var cardA = _deck.Pop();
-            var cardB = _deck.Pop();
+            var cardA = deck.Pop();
+            var cardB = deck.Pop();
             var data = new CardPairData(cardA, cardB);
-            _hands.Add(data);
+            _hands.Add(data, display);
 
             display.SetDisplay(data);
         }
@@ -72,27 +73,50 @@ public class PokerTableManager : MonoBehaviour
         _riverCards.Clear();
         foreach (var display in _riverCardDisplays)
         {
-            var card = _deck.Pop();
-            _riverCards.Add(card);
+            var card = deck.Pop();
+            _riverCards.Add(card, display);
             display.SetDisplay(card);
+        }
+    }
+
+    private void DisplayWinningCards()
+    {
+        var winningHand = PokerRuleSet.GetWinningHand(_hands.Keys.ToList(), _riverCards.Keys.ToList());
+
+        var winningPairDisplay = _cachedPairDisplays[winningHand.index];
+        winningPairDisplay.HighlightWinningCards(winningHand.winningCards);
+
+        foreach (var card in _riverCards)
+        {
+            card.Value.SetDisabled(true);
+        }
+
+        foreach (var card in winningHand.winningCards)
+        {
+            if (_riverCards.ContainsKey(card))
+            {
+                _riverCards[card].SetDisabled(false);
+            }
         }
     }
 
     private void Start()
     {
-        var deck = CreateDeck();
-        _deck = deck;
-
         for (var i = 0; i < _totalHands; i++)
         {
             var display = Instantiate(_cardPairDisplayPrefab);
             display.Initialize(_cardPairsContainer);
-            _cardPairDisplays.Add(display);
+            _cachedPairDisplays.Add(display);
         }
+    }
 
-        SetCards();
-
-        var handIndex = PokerRuleSet.GetWinningHand(_hands, _riverCards);
-        Debug.Log($"WINNING HANDS: {handIndex}");
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            var deck = CreateDeck();
+            SetCards(deck);
+            DisplayWinningCards();
+        }
     }
 }

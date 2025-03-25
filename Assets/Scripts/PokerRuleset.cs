@@ -5,7 +5,7 @@ using System.Linq;
 
 public static class PokerRuleSet
 {
-    public static int GetWinningHand(List<CardPairData> pairs, List<CardData> river)
+    public static (int index, List<CardData> winningCards) GetWinningHand(List<CardPairData> pairs, List<CardData> river)
     {
         var winningHandType = PokerHandType.Invalid;
         var winningHandIndex = -1;
@@ -31,16 +31,21 @@ public static class PokerRuleSet
             }
         }
 
-        return winningHandIndex;
+        return (winningHandIndex, winningCards);
     }
 
-    private static int CompareHands(List<CardData> hand1, List<CardData> hand2)
+    private static int CompareHands(List<CardData> handA, List<CardData> handB)
     {
-        for (int i = 0; i < hand1.Count; i++)
+        for (int i = 0; i < handA.Count; i++)
         {
-            if (hand1[i].Rank > hand2[i].Rank)
+            if (handA.Count <= i)
+                return -1;
+            if (handB.Count <= i)
                 return 1;
-            if (hand1[i].Rank < hand2[i].Rank)
+
+            if (handA[i].Rank > handB[i].Rank)
+                return 1;
+            if (handA[i].Rank < handB[i].Rank)
                 return -1;
         }
         return 0;
@@ -58,6 +63,7 @@ public static class PokerRuleSet
         var hasThreeOfAKind = false;
         var hasTwoPair = false;
         var hasPair = false;
+        var winningSuit = CardSuit.Clubs;
 
         var winningCards = new List<CardData>();
         var cards = new List<CardData>(river)
@@ -86,7 +92,7 @@ public static class PokerRuleSet
             if (suit.Value >= 5)
             {
                 isFlush = true;
-                winningCards = cards.Where(c => c.Suit == suit.Key).OrderByDescending(c => c.Rank).Take(5).ToList();
+                winningSuit = suit.Key;
                 break;
             }
         }
@@ -166,7 +172,10 @@ public static class PokerRuleSet
         if (hasThreeOfAKind && hasPair)
             return (PokerHandType.FullHouse, winningCards);
         if (isFlush)
+        {
+            winningCards = cards.Where(c => c.Suit == winningSuit).OrderByDescending(c => c.Rank).Take(5).ToList();
             return (PokerHandType.Flush, winningCards);
+        }
         if (isStraight)
             return (PokerHandType.Straight, winningCards);
         if (hasThreeOfAKind)
@@ -176,7 +185,7 @@ public static class PokerRuleSet
         if (hasPair)
             return (PokerHandType.OnePair, winningCards);
 
-        return (PokerHandType.HighCard, cards.OrderByDescending(c => c.Rank).Take(5).ToList());
+        return (PokerHandType.HighCard, cards.OrderByDescending(c => c.Rank).Take(1).ToList());
     }
 
 }
