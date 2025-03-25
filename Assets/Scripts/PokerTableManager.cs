@@ -197,7 +197,7 @@ public class PokerTableManager : MonoBehaviour
         }
 
         // Update winning text
-        _handsWonText.text = "<size=14><b>Hands Won</b></size>\n";
+        _handsWonText.text = "<size=14><b>Best Hand (Per Round)</b></size>\n";
         _handsPlayedText.text = "<size=14><b>Hands Played</b></size>\n";
 
         var total = 0;
