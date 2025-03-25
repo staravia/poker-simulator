@@ -11,6 +11,7 @@ public static class PokerRuleSet
         var winningHandType = PokerHandType.Invalid;
         var winningHandIndex = -1;
         var playedHandTypes = new List<PokerHandType>();
+        var isDraw = false;
         List<CardData> winningCards = null;
 
         for (int i = 0; i < pairs.Count; i++)
@@ -23,15 +24,28 @@ public static class PokerRuleSet
                 winningHandType = result.WinningHandType;
                 winningHandIndex = i;
                 winningCards = result.WinningCards;
+                isDraw = false;
             }
             else if (result.WinningHandType == winningHandType)
             {
-                if (CompareHands(result.WinningCards, winningCards) > 0)
+                var comparison = CompareHands(result.WinningCards, winningCards);
+                if (comparison == 0)
+                {
+                    isDraw = true;
+                    winningCards.AddRange(result.WinningCards);
+                }
+                else if (comparison > 0)
                 {
                     winningHandIndex = i;
                     winningCards = result.WinningCards;
+                    isDraw = false;
                 }
             }
+        }
+
+        if (isDraw)
+        {
+            winningHandType = PokerHandType.Draw;
         }
 
         return new WinningHandArgs(winningHandType, winningCards, winningHandIndex, playedHandTypes, pairs, river);
@@ -70,11 +84,9 @@ public static class PokerRuleSet
 
         var winningCards = new List<CardData>();
         var pairedCards = new List<CardData>();
-        var cards = new List<CardData>(river)
-    {
-        pair.CardA,
-        pair.CardB
-    };
+        var cards = new List<CardData>(river);
+        cards.Add(pair.CardA);
+        cards.Add(pair.CardB);
 
         cards.Sort((x, y) => x.Rank.CompareTo(y.Rank));
 
@@ -266,6 +278,19 @@ public static class PokerRuleSet
         if (winningCards.Count == 0)
             winningCards = pairedCards;
 
+        // Get Kicker cards
+        cards.Sort((x, y) => y.Rank.CompareTo(x.Rank));
+        foreach (var card in cards)
+        {
+            if (winningCards.Count >= 5)
+                break;
+
+            if (winningCards.Contains(card))
+                continue;
+
+            winningCards.Add(card);
+        }
+
         if (isRoyalFlush)
             return new WinningHandArgs(PokerHandType.RoyalFlush, winningCards);
         if (isStraightFlush)
@@ -305,5 +330,6 @@ public enum PokerHandType
     FullHouse = 6,
     FourOfAKind = 7,
     StraightFlush = 8,
-    RoyalFlush = 9
+    RoyalFlush = 9,
+    Draw = 10
 }

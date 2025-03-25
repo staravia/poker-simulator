@@ -223,7 +223,7 @@ public class PokerTableManager : MonoBehaviour
         _handsWonText.text += $"\n<size=14>Rounds Played: {total}</size>";
         _handsWonText.text += $"\n<size=14>Winning Hand: {currentHandType}</size>";
 
-        // if (currentHandType == PokerHandType.HighCard)
+        // if (currentHandType == PokerHandType.Draw)
         //     _isPaused = true;
     }
 
