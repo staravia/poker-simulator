@@ -2,36 +2,39 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using UnityEngine;
 
 public static class PokerRuleSet
 {
-    public static (int index, List<CardData> winningCards) GetWinningHand(List<CardPairData> pairs, List<CardData> river)
+    public static WinningHandArgs GetWinningHand(List<CardPairData> pairs, List<CardData> river)
     {
         var winningHandType = PokerHandType.Invalid;
         var winningHandIndex = -1;
+        var playedHands = new List<PokerHandType>();
         List<CardData> winningCards = null;
 
         for (int i = 0; i < pairs.Count; i++)
         {
-            var handResult = GetHandType(pairs[i], river);
+            var result = GetHandType(pairs[i], river);
+            playedHands.Add(result.HandType);
 
-            if (handResult.handType > winningHandType)
+            if (result.HandType > winningHandType)
             {
-                winningHandType = handResult.handType;
+                winningHandType = result.HandType;
                 winningHandIndex = i;
-                winningCards = handResult.winningCards;
+                winningCards = result.WinningCards;
             }
-            else if (handResult.handType == winningHandType)
+            else if (result.HandType == winningHandType)
             {
-                if (CompareHands(handResult.winningCards, winningCards) > 0)
+                if (CompareHands(result.WinningCards, winningCards) > 0)
                 {
                     winningHandIndex = i;
-                    winningCards = handResult.winningCards;
+                    winningCards = result.WinningCards;
                 }
             }
         }
 
-        return (winningHandIndex, winningCards);
+        return new WinningHandArgs(winningHandType, winningCards, winningHandIndex, playedHands);
     }
 
     private static int CompareHands(List<CardData> handA, List<CardData> handB)
@@ -51,11 +54,11 @@ public static class PokerRuleSet
         return 0;
     }
 
-    public static (PokerHandType handType, List<CardData> winningCards) GetHandType(CardPairData pair, List<CardData> river)
+    public static WinningHandArgs GetHandType(CardPairData pair, List<CardData> river)
     {
         var suitCount = new Dictionary<CardSuit, int>();
         var rankCount = new Dictionary<CardRank, int>();
-        var kickerCard = CardRank.Two;
+        var isStraightFlush = false;
         var isStraight = false;
         var isFlush = false;
         var isRoyalFlush = false;
@@ -66,6 +69,7 @@ public static class PokerRuleSet
         var winningSuit = CardSuit.Clubs;
 
         var winningCards = new List<CardData>();
+        var pairedCards = new List<CardData>();
         var cards = new List<CardData>(river)
     {
         pair.CardA,
@@ -87,6 +91,7 @@ public static class PokerRuleSet
                 rankCount.Add(card.Rank, 1);
         }
 
+        // Check for flush
         foreach (var suit in suitCount)
         {
             if (suit.Value >= 5)
@@ -97,21 +102,24 @@ public static class PokerRuleSet
             }
         }
 
-        int consecutiveCount = 1;
-        for (int i = 1; i < cards.Count; i++)
+        // Check for straight flush
+        var consecutiveCount = 1;
+        for (var i = 1; i < cards.Count; i++)
         {
             if (cards[i].Rank == cards[i - 1].Rank + 1 && cards[i].Suit == cards[i - 1].Suit)
             {
                 consecutiveCount++;
                 if (consecutiveCount >= 5)
                 {
-                    isStraight = true;
                     winningCards = cards.Skip(i - 4).Take(5).ToList();
-                    kickerCard = cards[i].Rank;
 
                     if (cards[i - 4].Rank == CardRank.Ten && cards[i].Rank == CardRank.Ace)
                     {
                         isRoyalFlush = true;
+                    }
+                    else
+                    {
+                        isStraightFlush = true;
                     }
 
                     break;
@@ -123,25 +131,52 @@ public static class PokerRuleSet
             }
         }
 
+        // Check for straights
+        if (!isStraightFlush)
+        {
+            consecutiveCount = 1;
+            for (var i = 1; i < cards.Count; i++)
+            {
+                if (cards[i].Rank == cards[i - 1].Rank + 1)
+                {
+                    consecutiveCount++;
+                    if (consecutiveCount >= 5)
+                    {
+                        winningCards = cards.Skip(i - 4).Take(5).ToList();
+                        isStraight = true;
+                        break;
+                    }
+                }
+                else if (cards[i].Rank != cards[i - 1].Rank)
+                {
+                    consecutiveCount = 1;
+                }
+            }
+        }
+
+        // Check for pairs
         foreach (var rank in rankCount)
         {
             if (rank.Value == 4)
             {
                 hasFourOfAKind = true;
                 winningCards = cards.Where(c => c.Rank == rank.Key).ToList();
-                kickerCard = cards.First(c => c.Rank != rank.Key).Rank;
+                break;
             }
-            else if (rank.Value == 3)
+
+            if (rank.Value == 3)
             {
                 hasThreeOfAKind = true;
 
                 if (hasPair)
                 {
-                    winningCards.AddRange(cards.Where(c => c.Rank == rank.Key));
+                    pairedCards.AddRange(cards.Where(c => c.Rank == rank.Key));
+                    winningCards = pairedCards;
+                    break;
                 }
                 else
                 {
-                    winningCards = cards.Where(c => c.Rank == rank.Key).ToList();
+                    pairedCards = cards.Where(c => c.Rank == rank.Key).ToList();
                 }
             }
             else if (rank.Value == 2)
@@ -149,43 +184,48 @@ public static class PokerRuleSet
                 if (hasPair)
                 {
                     hasTwoPair = true;
-                    winningCards.AddRange(cards.Where(c => c.Rank == rank.Key));
+                    pairedCards.AddRange(cards.Where(c => c.Rank == rank.Key));
                 }
                 else if (hasThreeOfAKind)
                 {
-                    winningCards.AddRange(cards.Where(c => c.Rank == rank.Key));
+                    pairedCards.AddRange(cards.Where(c => c.Rank == rank.Key));
+                    winningCards = pairedCards;
+                    break;
                 }
                 else
                 {
                     hasPair = true;
-                    winningCards = cards.Where(c => c.Rank == rank.Key).ToList();
+                    pairedCards = cards.Where(c => c.Rank == rank.Key).ToList();
                 }
             }
         }
 
+        if (winningCards.Count == 0)
+            winningCards = pairedCards;
+
         if (isRoyalFlush)
-            return (PokerHandType.RoyalFlush, winningCards);
-        if (isStraight && isFlush)
-            return (PokerHandType.StraightFlush, winningCards);
+            return new WinningHandArgs(PokerHandType.RoyalFlush, winningCards);
+        if (isStraightFlush)
+            return new WinningHandArgs(PokerHandType.StraightFlush, winningCards);
         if (hasFourOfAKind)
-            return (PokerHandType.FourOfAKind, winningCards);
+            return new WinningHandArgs(PokerHandType.FourOfAKind, winningCards);
         if (hasThreeOfAKind && hasPair)
-            return (PokerHandType.FullHouse, winningCards);
+            return new WinningHandArgs(PokerHandType.FullHouse, winningCards);
         if (isFlush)
         {
             winningCards = cards.Where(c => c.Suit == winningSuit).OrderByDescending(c => c.Rank).Take(5).ToList();
-            return (PokerHandType.Flush, winningCards);
+            return new WinningHandArgs(PokerHandType.Flush, winningCards);
         }
         if (isStraight)
-            return (PokerHandType.Straight, winningCards);
+            return new WinningHandArgs(PokerHandType.Straight, winningCards);
         if (hasThreeOfAKind)
-            return (PokerHandType.ThreeOfAKind, winningCards);
+            return new WinningHandArgs(PokerHandType.ThreeOfAKind, winningCards);
         if (hasTwoPair)
-            return (PokerHandType.TwoPair, winningCards);
+            return new WinningHandArgs(PokerHandType.TwoPair, winningCards);
         if (hasPair)
-            return (PokerHandType.OnePair, winningCards);
+            return new WinningHandArgs(PokerHandType.OnePair, winningCards);
 
-        return (PokerHandType.HighCard, cards.OrderByDescending(c => c.Rank).Take(1).ToList());
+        return new WinningHandArgs(PokerHandType.HighCard, cards.OrderByDescending(c => c.Rank).Take(5).ToList());
     }
 
 }
